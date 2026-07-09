@@ -16,8 +16,20 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-
           script: |
             cd ~/GitLens-AI
-            git pull origin main
+
+            echo "Fetching latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "Stopping old containers..."
+            docker compose down
+
+            echo "Building and starting containers..."
             docker compose up --build -d
+
+            echo "Removing unused Docker images..."
+            docker image prune -f
+
+            echo "Deployment completed successfully!"
