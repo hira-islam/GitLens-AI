@@ -14,7 +14,7 @@ export default function HomePage() {
       <div className="relative mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="text-center">
           <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-            GitHub Profile Analyzer
+            GitHub Profile Analyzer | GitLens AI 🚀 CI/CD Working
           </span>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             GitLens <span className="text-indigo-600">AI</span>
