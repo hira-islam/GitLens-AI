@@ -219,7 +219,7 @@ docker compose -f docker/docker-compose.yml up --build
 - [ ] Structured logging in backend (request ID optional)
 - [ ] README deployment section (single VPS, Railway, Render, or Fly.io)
 - [ ] Optional `cd.yml` — push images to GHCR on version tag
-- [ ] Optional `GITHUB_TOKEN` support for higher API limits
+- [ ] Optional `GH_PAT` support for higher API limits
 
 ### Done when
 

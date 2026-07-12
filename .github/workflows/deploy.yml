@@ -12,24 +12,57 @@ jobs:
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.2
+
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+
           script: |
+            set -e
+
+            echo "=============================="
+            echo "Changing project directory..."
+            echo "=============================="
             cd ~/GitLens-AI
 
+            echo "=============================="
             echo "Fetching latest code..."
+            echo "=============================="
             git fetch origin
             git reset --hard origin/main
 
+            echo "=============================="
             echo "Stopping old containers..."
-            docker compose down
+            echo "=============================="
+            docker compose -f docker-compose.prod.yml down
 
+            echo "=============================="
             echo "Building and starting containers..."
-            docker compose up --build -d
+            echo "=============================="
+            docker compose -f docker-compose.prod.yml up --build -d
 
-            echo "Removing unused Docker images..."
+            echo "=============================="
+            echo "Waiting for application to start..."
+            echo "=============================="
+            sleep 10
+
+            echo "=============================="
+            echo "Running Health Check..."
+            echo "=============================="
+
+            curl --fail http://localhost/api/health
+
+            echo ""
+            echo "=============================="
+            echo "Health Check Passed!"
+            echo "=============================="
+
+            echo "=============================="
+            echo "Cleaning unused Docker images..."
+            echo "=============================="
             docker image prune -f
 
-            echo "Deployment completed successfully!"
+            echo "=============================="
+            echo "Deployment Completed Successfully!"
+            echo "=============================="

@@ -52,8 +52,27 @@ class DatabaseService:
 
         return [self._document_to_response(doc) for doc in documents]
 
+    async def health_check(self) -> bool:
+        """
+        Check whether MongoDB is reachable.
+
+        Returns:
+            True if MongoDB responds successfully.
+            False otherwise.
+        """
+        if self._client is None:
+            return False
+
+        try:
+            await self._client.admin.command("ping")
+            return True
+        except Exception:
+            return False
+
     def _document_to_response(self, document: dict[str, Any]) -> AnalysisResponse:
         payload = {key: value for key, value in document.items() if key != "_id"}
         if isinstance(payload.get("created_at"), str):
-            payload["created_at"] = datetime.fromisoformat(payload["created_at"].replace("Z", "+00:00"))
+            payload["created_at"] = datetime.fromisoformat(
+                payload["created_at"].replace("Z", "+00:00")
+            )
         return AnalysisResponse.model_validate(payload)

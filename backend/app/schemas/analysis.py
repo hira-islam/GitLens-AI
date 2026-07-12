@@ -50,4 +50,12 @@ class AnalysisResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str = "healthy"
+    """
+    Response returned by the health endpoint.
+
+    This endpoint is used by GitHub Actions and monitoring tools
+    to verify that the API and database are working correctly.
+    """
+
+    status: str
+    database: str

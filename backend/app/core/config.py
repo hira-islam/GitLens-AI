@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     mongodb_url: str = "mongodb://localhost:27017"
     mongodb_db_name: str = "gitlens_ai"
-    github_token: str | None = None
+    GH_PAT: str | None = None
     cors_origins: str = "http://localhost:5173"
     history_limit: int = 50
 

@@ -150,7 +150,7 @@ Base path: `/api/v1`
 ### GitHub API Notes
 
 - Use **unauthenticated** public API (60 req/hr per IP) — sufficient for learning.
-- Optional later: `GITHUB_TOKEN` env var for 5,000 req/hr.
+- Optional later: `GH_PAT` env var for 5,000 req/hr.
 - Respect `Link` header pagination if user has >100 repos (Phase 2 enhancement).
 
 ---
@@ -273,7 +273,7 @@ Rules live in `backend/app/services/roast_service.py` as a declarative list for 
 |----------|---------|-------------|
 | `MONGODB_URL` | backend | Mongo connection string |
 | `MONGODB_DB_NAME` | backend | Database name |
-| `GITHUB_TOKEN` | backend | Optional PAT for higher rate limits |
+| `GH_PAT` | backend | Optional PAT for higher rate limits |
 | `CORS_ORIGINS` | backend | Allowed frontend origins |
 | `VITE_API_URL` | frontend (build) | Backend base URL |
 
@@ -327,7 +327,7 @@ Keep CD minimal for learning; focus on CI first.
 
 - No authentication (by design).
 - Validate and sanitize GitHub usernames (alphanumeric + hyphen, max 39 chars).
-- Never expose `GITHUB_TOKEN` to frontend.
+- Never expose `GH_PAT` to frontend.
 - Use `.env.example` files; real secrets in `.env` (gitignored).
 - Rate-limit analyze endpoint optionally (in-memory, Phase 3).
 

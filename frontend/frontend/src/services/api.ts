@@ -2,7 +2,14 @@ import axios, { AxiosError } from "axios";
 
 import type { Analysis, ApiErrorBody } from "../types/analysis";
 
-const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// All API requests go through /api.
+//
+// Development:
+// Vite proxies /api -> http://localhost:8000
+//
+// Production:
+// Nginx proxies /api -> FastAPI
+const baseURL = "/api";
 
 export const api = axios.create({
   baseURL,

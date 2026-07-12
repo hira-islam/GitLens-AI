@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     database_service = DatabaseService(settings.mongodb_url, settings.mongodb_db_name)
     await database_service.connect()
     app.state.database_service = database_service
-    app.state.github_service = GitHubService(token=settings.github_token)
+    app.state.github_service = GitHubService(token=settings.GH_PAT)
     yield
     await database_service.close()
 
