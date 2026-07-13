@@ -21,6 +21,8 @@ jobs:
           script: |
             set -e
 
+            COMPOSE="docker compose --env-file .env.production -f docker-compose.prod.yml"
+
             echo "=============================="
             echo "Changing project directory..."
             echo "=============================="
@@ -35,17 +37,17 @@ jobs:
             echo "=============================="
             echo "Pulling latest Docker images..."
             echo "=============================="
-            docker compose -f docker-compose.prod.yml pull
+            $COMPOSE pull
 
             echo "=============================="
             echo "Stopping old containers..."
             echo "=============================="
-            docker compose -f docker-compose.prod.yml down
+            $COMPOSE down
 
             echo "=============================="
             echo "Starting application..."
             echo "=============================="
-            docker compose -f docker-compose.prod.yml up -d
+            $COMPOSE up -d
 
             echo "=============================="
             echo "Waiting for application..."
