@@ -1,6 +1,7 @@
 services:
   mongodb:
     image: mongo:7.0
+
     restart: unless-stopped
 
     volumes:
@@ -17,9 +18,7 @@ services:
       start_period: 10s
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/hira-islam/gitlens-ai-backend:latest
 
     restart: unless-stopped
 
@@ -34,9 +33,7 @@ services:
       - app-network
 
   nginx:
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+    image: ghcr.io/hira-islam/gitlens-ai-nginx:latest
 
     restart: unless-stopped
 

@@ -33,17 +33,22 @@ jobs:
             git reset --hard origin/main
 
             echo "=============================="
+            echo "Pulling latest Docker images..."
+            echo "=============================="
+            docker compose -f docker-compose.prod.yml pull
+
+            echo "=============================="
             echo "Stopping old containers..."
             echo "=============================="
             docker compose -f docker-compose.prod.yml down
 
             echo "=============================="
-            echo "Building and starting containers..."
+            echo "Starting application..."
             echo "=============================="
-            docker compose -f docker-compose.prod.yml up --build -d
+            docker compose -f docker-compose.prod.yml up -d
 
             echo "=============================="
-            echo "Waiting for application to start..."
+            echo "Waiting for application..."
             echo "=============================="
             sleep 10
 
