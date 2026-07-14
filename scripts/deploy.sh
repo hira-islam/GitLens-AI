@@ -9,6 +9,7 @@ set -euo pipefail
 PROJECT_DIR="$HOME/GitLens-AI"
 DEPLOYMENT_DIR="$PROJECT_DIR/.deployment"
 LOG_FILE="$DEPLOYMENT_DIR/deploy.log"
+PREVIOUS_IMAGE_TAG_FILE="$DEPLOYMENT_DIR/previous_image_tag"
 
 NEW_IMAGE_TAG="${1:-}"
 
@@ -139,6 +140,86 @@ set_image_tag() {
 }
 
 ############################################################
+# Backup Current Image Tag
+############################################################
+
+backup_current_image_tag() {
+
+    local current_tag
+
+    current_tag=$(get_current_image_tag)
+
+    echo "IMAGE_TAG=$current_tag" > "$PREVIOUS_IMAGE_TAG_FILE"
+
+    log_success "Previous image tag backed up: $current_tag"
+}
+
+############################################################
+# Restore Previous Image Tag
+############################################################
+
+restore_previous_image_tag() {
+
+    if [ ! -f "$PREVIOUS_IMAGE_TAG_FILE" ]; then
+        log_error "Rollback failed. Backup image tag not found."
+        exit 1
+    fi
+
+    cp "$PREVIOUS_IMAGE_TAG_FILE" .env.production
+
+    log_success "Previous image tag restored."
+}
+
+############################################################
+# Rollback
+############################################################
+
+rollback() {
+
+    log_warn "Health check failed."
+    log_warn "Starting automatic rollback..."
+
+    restore_previous_image_tag
+
+    log_info "Stopping failed deployment..."
+
+    "${COMPOSE[@]}" down
+
+    log_success "Failed deployment stopped."
+
+    log_info "Pulling previous Docker images..."
+
+    "${COMPOSE[@]}" pull
+
+    log_success "Previous Docker images pulled successfully."
+
+    log_info "Starting previous application version..."
+
+    "${COMPOSE[@]}" up -d --force-recreate --remove-orphans
+    
+    log_success "Previous application version started."
+
+    log_info "Waiting for rollback startup..."
+
+    sleep 10
+
+    log_info "Running rollback health check..."
+
+    if curl --fail http://localhost/api/health >/dev/null; then
+
+        log_success "Rollback completed successfully."
+
+    else
+
+        log_error "Rollback health check failed."
+        log_error "Manual intervention required."
+
+        exit 1
+
+    fi
+}
+
+############################################################
 # Deploy
 ############################################################
 
@@ -149,6 +230,8 @@ deploy() {
     "${COMPOSE[@]}" pull
 
     log_success "Docker images pulled successfully."
+
+    set_image_tag
 
     log_info "Stopping existing containers..."
 
@@ -175,9 +258,15 @@ health_check() {
 
     log_info "Running application health check..."
 
-    curl --fail http://localhost/api/health >/dev/null
+    if curl --fail http://localhost/api/health >/dev/null; then
 
-    log_success "Health check passed."
+        log_success "Health check passed."
+
+    else
+
+        rollback
+
+    fi
 }
 
 ############################################################
@@ -208,11 +297,11 @@ main() {
     log_info "Server    : $(hostname)"
     log_info "User      : $(whoami)"
 
-    validate
+   validate
 
     validate_image_tag
 
-    set_image_tag
+    backup_current_image_tag
 
     deploy
 
@@ -226,7 +315,7 @@ main() {
     echo "========================================"
     echo " Deployment Summary"
     echo "========================================"
-    echo "Previous Image : $(grep '^IMAGE_TAG=' "$PROJECT_DIR/.deployment/previous_image_tag" 2>/dev/null || echo "Recorded during rollback implementation")"
+    echo "Previous Image : $(cut -d '=' -f2 "$PREVIOUS_IMAGE_TAG_FILE")"
     echo "Current Image  : $NEW_IMAGE_TAG"
     echo "Status         : SUCCESS"
     echo "Completed At   : $(date '+%F %T')"
