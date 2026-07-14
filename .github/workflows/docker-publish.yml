@@ -42,7 +42,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/gitlens-ai-backend
           tags: |
             type=raw,value=latest
-            type=sha
+            type=raw,value=${{ github.sha }}
 
       - name: Build and Push Backend
         uses: docker/build-push-action@v6
@@ -63,7 +63,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/gitlens-ai-nginx
           tags: |
             type=raw,value=latest
-            type=sha
+            type=raw,value=${{ github.sha }}
 
       - name: Build and Push Nginx
         uses: docker/build-push-action@v6
