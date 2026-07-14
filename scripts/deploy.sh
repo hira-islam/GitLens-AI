@@ -25,22 +25,35 @@ COMPOSE=(
 # Logging
 ############################################################
 
-log() {
+write_log() {
+
+    local level="$1"
+    local message="$2"
 
     mkdir -p "$DEPLOYMENT_DIR"
     touch "$LOG_FILE"
 
-    echo "[INFO] $1"
-    echo "$(date '+%F %T') [INFO] $1" >> "$LOG_FILE"
+    local timestamp
+    timestamp=$(date '+%F %T')
+
+    echo "[$level] $message"
+    echo "$timestamp [$level] $message" >> "$LOG_FILE"
 }
 
-error() {
+log_info() {
+    write_log "INFO" "$1"
+}
 
-    mkdir -p "$DEPLOYMENT_DIR"
-    touch "$LOG_FILE"
+log_success() {
+    write_log "SUCCESS" "$1"
+}
 
-    echo "[ERROR] $1"
-    echo "$(date '+%F %T') [ERROR] $1" >> "$LOG_FILE"
+log_warn() {
+    write_log "WARN" "$1"
+}
+
+log_error() {
+    write_log "ERROR" "$1"
 }
 
 ############################################################
@@ -51,7 +64,7 @@ validate() {
 
     cd "$PROJECT_DIR"
 
-    log "Validating production environment..."
+    log_info "Validating production environment..."
 
     REQUIRED_FILES=(
         ".env.production"
@@ -62,22 +75,22 @@ validate() {
     for file in "${REQUIRED_FILES[@]}"
     do
         if [ ! -f "$file" ]; then
-            error "Missing required file: $file"
+            log_error "Missing required file: $file"
             exit 1
         fi
     done
 
     if ! command -v docker >/dev/null 2>&1; then
-        error "Docker is not installed."
+        log_error "Docker is not installed."
         exit 1
     fi
 
     if ! docker compose version >/dev/null 2>&1; then
-        error "Docker Compose is unavailable."
+        log_error "Docker Compose is unavailable."
         exit 1
     fi
 
-    log "Validation completed successfully."
+    log_success "Environment validation completed."
 }
 
 ############################################################
@@ -87,16 +100,16 @@ validate() {
 validate_image_tag() {
 
     if [ -z "$NEW_IMAGE_TAG" ]; then
-        error "Image tag argument is required."
+        log_error "Image tag argument is required."
         exit 1
     fi
 
     if [[ ! "$NEW_IMAGE_TAG" =~ ^[a-f0-9]{7,40}$ ]]; then
-        error "Invalid image tag: $NEW_IMAGE_TAG"
+        log_error "Invalid image tag: $NEW_IMAGE_TAG"
         exit 1
     fi
 
-    log "Deploying image tag: $NEW_IMAGE_TAG"
+    log_info "Target image tag: $NEW_IMAGE_TAG"
 }
 
 ############################################################
@@ -118,11 +131,11 @@ set_image_tag() {
 
     current_tag=$(get_current_image_tag)
 
-    log "Current deployed image tag: $current_tag"
+    log_info "Previous image tag: $current_tag"
 
     sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$NEW_IMAGE_TAG/" .env.production
 
-    log "Updated deployment image tag to: $NEW_IMAGE_TAG"
+    log_success "Deployment image tag updated."
 }
 
 ############################################################
@@ -131,17 +144,23 @@ set_image_tag() {
 
 deploy() {
 
-    log "Pulling Docker images..."
+    log_info "Pulling Docker images..."
 
     "${COMPOSE[@]}" pull
 
-    log "Stopping existing containers..."
+    log_success "Docker images pulled successfully."
+
+    log_info "Stopping existing containers..."
 
     "${COMPOSE[@]}" down
 
-    log "Starting application..."
+    log_success "Existing containers stopped."
+
+    log_info "Starting application..."
 
     "${COMPOSE[@]}" up -d
+
+    log_success "Application started."
 }
 
 ############################################################
@@ -150,15 +169,15 @@ deploy() {
 
 health_check() {
 
-    log "Waiting for application startup..."
+    log_info "Waiting for application startup..."
 
     sleep 10
 
-    log "Running application health check..."
+    log_info "Running application health check..."
 
     curl --fail http://localhost/api/health >/dev/null
 
-    log "Health check passed."
+    log_success "Health check passed."
 }
 
 ############################################################
@@ -167,11 +186,11 @@ health_check() {
 
 cleanup() {
 
-    log "Cleaning unused Docker images..."
+    log_info "Cleaning unused Docker images..."
 
     docker image prune -f
 
-    log "Docker cleanup completed."
+    log_success "Docker cleanup completed."
 }
 
 ############################################################
@@ -183,6 +202,11 @@ main() {
     echo "========================================"
     echo " GitLens-AI Production Deployment"
     echo "========================================"
+
+    log_info "Deployment started."
+    log_info "Timestamp : $(date '+%F %T')"
+    log_info "Server    : $(hostname)"
+    log_info "User      : $(whoami)"
 
     validate
 
@@ -196,11 +220,16 @@ main() {
 
     cleanup
 
-    log "Deployment completed successfully."
+    log_success "Deployment completed successfully."
 
     echo
     echo "========================================"
-    echo " Deployment Completed Successfully"
+    echo " Deployment Summary"
+    echo "========================================"
+    echo "Previous Image : $(grep '^IMAGE_TAG=' "$PROJECT_DIR/.deployment/previous_image_tag" 2>/dev/null || echo "Recorded during rollback implementation")"
+    echo "Current Image  : $NEW_IMAGE_TAG"
+    echo "Status         : SUCCESS"
+    echo "Completed At   : $(date '+%F %T')"
     echo "========================================"
 }
 
