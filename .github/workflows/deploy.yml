@@ -44,4 +44,4 @@ jobs:
             echo "Executing deployment script..."
             echo "=============================="
 
-            ./scripts/deploy.sh
+            ./scripts/deploy.sh "${{ github.sha }}"

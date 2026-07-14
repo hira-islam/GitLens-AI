@@ -10,7 +10,16 @@ PROJECT_DIR="$HOME/GitLens-AI"
 DEPLOYMENT_DIR="$PROJECT_DIR/.deployment"
 LOG_FILE="$DEPLOYMENT_DIR/deploy.log"
 
-COMPOSE="docker compose --env-file .env.production -f docker-compose.prod.yml"
+NEW_IMAGE_TAG="${1:-}"
+
+COMPOSE=(
+    docker
+    compose
+    --env-file
+    .env.production
+    -f
+    docker-compose.prod.yml
+)
 
 ############################################################
 # Logging
@@ -58,8 +67,6 @@ validate() {
         fi
     done
 
-    log "Checking Docker installation..."
-
     if ! command -v docker >/dev/null 2>&1; then
         error "Docker is not installed."
         exit 1
@@ -74,22 +81,67 @@ validate() {
 }
 
 ############################################################
-# Deployment
+# Validate Image Tag
+############################################################
+
+validate_image_tag() {
+
+    if [ -z "$NEW_IMAGE_TAG" ]; then
+        error "Image tag argument is required."
+        exit 1
+    fi
+
+    if [[ ! "$NEW_IMAGE_TAG" =~ ^[a-f0-9]{7,40}$ ]]; then
+        error "Invalid image tag: $NEW_IMAGE_TAG"
+        exit 1
+    fi
+
+    log "Deploying image tag: $NEW_IMAGE_TAG"
+}
+
+############################################################
+# Get Current Image Tag
+############################################################
+
+get_current_image_tag() {
+
+    grep '^IMAGE_TAG=' .env.production | cut -d '=' -f2
+}
+
+############################################################
+# Set Image Tag
+############################################################
+
+set_image_tag() {
+
+    local current_tag
+
+    current_tag=$(get_current_image_tag)
+
+    log "Current deployed image tag: $current_tag"
+
+    sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$NEW_IMAGE_TAG/" .env.production
+
+    log "Updated deployment image tag to: $NEW_IMAGE_TAG"
+}
+
+############################################################
+# Deploy
 ############################################################
 
 deploy() {
 
     log "Pulling Docker images..."
 
-    $COMPOSE pull
+    "${COMPOSE[@]}" pull
 
     log "Stopping existing containers..."
 
-    $COMPOSE down
+    "${COMPOSE[@]}" down
 
     log "Starting application..."
 
-    $COMPOSE up -d
+    "${COMPOSE[@]}" up -d
 }
 
 ############################################################
@@ -134,6 +186,10 @@ main() {
 
     validate
 
+    validate_image_tag
+
+    set_image_tag
+
     deploy
 
     health_check
@@ -142,7 +198,7 @@ main() {
 
     log "Deployment completed successfully."
 
-    echo ""
+    echo
     echo "========================================"
     echo " Deployment Completed Successfully"
     echo "========================================"
