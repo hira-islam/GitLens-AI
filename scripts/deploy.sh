@@ -17,11 +17,19 @@ COMPOSE="docker compose --env-file .env.production -f docker-compose.prod.yml"
 ############################################################
 
 log() {
+
+    mkdir -p "$DEPLOYMENT_DIR"
+    touch "$LOG_FILE"
+
     echo "[INFO] $1"
     echo "$(date '+%F %T') [INFO] $1" >> "$LOG_FILE"
 }
 
 error() {
+
+    mkdir -p "$DEPLOYMENT_DIR"
+    touch "$LOG_FILE"
+
     echo "[ERROR] $1"
     echo "$(date '+%F %T') [ERROR] $1" >> "$LOG_FILE"
 }
@@ -32,13 +40,9 @@ error() {
 
 validate() {
 
-    log "Validating production environment..."
-
     cd "$PROJECT_DIR"
 
-    mkdir -p "$DEPLOYMENT_DIR"
-
-    touch "$LOG_FILE"
+    log "Validating production environment..."
 
     REQUIRED_FILES=(
         ".env.production"
@@ -48,22 +52,29 @@ validate() {
 
     for file in "${REQUIRED_FILES[@]}"
     do
-        if [ ! -f "$file" ]
-        then
+        if [ ! -f "$file" ]; then
             error "Missing required file: $file"
             exit 1
         fi
     done
 
-    command -v docker >/dev/null
+    log "Checking Docker installation..."
 
-    docker compose version >/dev/null
+    if ! command -v docker >/dev/null 2>&1; then
+        error "Docker is not installed."
+        exit 1
+    fi
 
-    log "Validation completed."
+    if ! docker compose version >/dev/null 2>&1; then
+        error "Docker Compose is unavailable."
+        exit 1
+    fi
+
+    log "Validation completed successfully."
 }
 
 ############################################################
-# Deploy
+# Deployment
 ############################################################
 
 deploy() {
@@ -87,11 +98,11 @@ deploy() {
 
 health_check() {
 
-    log "Waiting for application..."
+    log "Waiting for application startup..."
 
     sleep 10
 
-    log "Running health check..."
+    log "Running application health check..."
 
     curl --fail http://localhost/api/health >/dev/null
 
@@ -107,6 +118,8 @@ cleanup() {
     log "Cleaning unused Docker images..."
 
     docker image prune -f
+
+    log "Docker cleanup completed."
 }
 
 ############################################################
@@ -116,7 +129,7 @@ cleanup() {
 main() {
 
     echo "========================================"
-    echo "GitLens-AI Production Deployment"
+    echo " GitLens-AI Production Deployment"
     echo "========================================"
 
     validate
@@ -131,7 +144,7 @@ main() {
 
     echo ""
     echo "========================================"
-    echo "Deployment Completed Successfully"
+    echo " Deployment Completed Successfully"
     echo "========================================"
 }
 
