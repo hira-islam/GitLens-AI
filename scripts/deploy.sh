@@ -12,6 +12,8 @@ LOG_FILE="$DEPLOYMENT_DIR/deploy.log"
 PREVIOUS_IMAGE_TAG_FILE="$DEPLOYMENT_DIR/previous_image_tag"
 
 NEW_IMAGE_TAG="${1:-}"
+DEPLOY_STATUS="SUCCESS"
+FINAL_IMAGE_TAG="$NEW_IMAGE_TAG"
 
 COMPOSE=(
     docker
@@ -207,6 +209,10 @@ rollback() {
 
     if curl --fail http://localhost/api/ready >/dev/null; then
 
+        DEPLOY_STATUS="ROLLED BACK"
+
+        FINAL_IMAGE_TAG=$(get_current_image_tag)
+
         log_success "Rollback completed successfully."
 
     else
@@ -316,8 +322,8 @@ main() {
     echo " Deployment Summary"
     echo "========================================"
     echo "Previous Image : $(cut -d '=' -f2 "$PREVIOUS_IMAGE_TAG_FILE")"
-    echo "Current Image  : $NEW_IMAGE_TAG"
-    echo "Status         : SUCCESS"
+    echo "Running Image  : $FINAL_IMAGE_TAG"
+    echo "Status         : $DEPLOY_STATUS"
     echo "Completed At   : $(date '+%F %T')"
     echo "========================================"
 }
