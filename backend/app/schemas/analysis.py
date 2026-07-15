@@ -59,3 +59,12 @@ class HealthResponse(BaseModel):
 
     status: str
     database: str
+
+class ReadyResponse(BaseModel):
+    """
+    Response returned by the readiness endpoint.
+    """
+
+    status: str
+    database: str
+    github: str

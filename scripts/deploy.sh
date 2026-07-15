@@ -196,7 +196,7 @@ rollback() {
     log_info "Starting previous application version..."
 
     "${COMPOSE[@]}" up -d --force-recreate --remove-orphans
-    
+
     log_success "Previous application version started."
 
     log_info "Waiting for rollback startup..."
@@ -205,7 +205,7 @@ rollback() {
 
     log_info "Running rollback health check..."
 
-    if curl --fail http://localhost/api/health >/dev/null; then
+    if curl --fail http://localhost/api/ready >/dev/null; then
 
         log_success "Rollback completed successfully."
 
@@ -258,7 +258,7 @@ health_check() {
 
     log_info "Running application health check..."
 
-    if curl --fail http://localhost/api/health >/dev/null; then
+    if curl --fail http://localhost/api/ready >/dev/null; then
 
         log_success "Health check passed."
 
