@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 
 import os
 from app.schemas.analysis import HealthResponse, ReadyResponse
-from fastapi import HTTPException
+# from fastapi import HTTPException
 
 # Health status constants
 HEALTHY = "healthy"
@@ -37,27 +37,27 @@ async def health(request: Request) -> HealthResponse:
         database=CONNECTED if database_connected else DISCONNECTED,
     )
 
-# @router.get("/ready", response_model=ReadyResponse)
-# async def ready(request: Request) -> ReadyResponse:
-
-#     database_service = request.app.state.database_service
-
-#     database_connected = await database_service.health_check()
-
-#     github_configured = bool(os.getenv("GH_PAT"))
-
-#     ready = database_connected and github_configured
-
-#     return ReadyResponse(
-#         status=READY if ready else NOT_READY,
-#         database=CONNECTED if database_connected else DISCONNECTED,
-#         github=CONFIGURED if github_configured else MISSING,
-#     )
-
-
 @router.get("/ready", response_model=ReadyResponse)
 async def ready(request: Request) -> ReadyResponse:
-    raise HTTPException(
-        status_code=500,
-        detail="Rollback test"
+
+    database_service = request.app.state.database_service
+
+    database_connected = await database_service.health_check()
+
+    github_configured = bool(os.getenv("GH_PAT"))
+
+    ready = database_connected and github_configured
+
+    return ReadyResponse(
+        status=READY if ready else NOT_READY,
+        database=CONNECTED if database_connected else DISCONNECTED,
+        github=CONFIGURED if github_configured else MISSING,
     )
+
+
+# @router.get("/ready", response_model=ReadyResponse)
+# async def ready(request: Request) -> ReadyResponse:
+#     raise HTTPException(
+#         status_code=500,
+#         detail="Rollback test"
+#     )
