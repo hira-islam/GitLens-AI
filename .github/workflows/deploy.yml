@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Print SHA
+        run: |
+          echo "github.sha=${{ github.sha }}"
+          echo "workflow_run.head_sha=${{ github.event.workflow_run.head_sha }}"
+          
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.2
 
