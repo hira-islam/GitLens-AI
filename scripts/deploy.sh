@@ -231,13 +231,13 @@ rollback() {
 
 deploy() {
 
+    set_image_tag
+
     log_info "Pulling Docker images..."
 
     "${COMPOSE[@]}" pull
 
     log_success "Docker images pulled successfully."
-
-    set_image_tag
 
     log_info "Stopping existing containers..."
 
