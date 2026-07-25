@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.exceptions import AppException
 from app.services.database_service import DatabaseService
 from app.services.github_service import GitHubService
+from prometheus_fastapi_instrumentator import Instrumentator
 
 
 @asynccontextmanager
@@ -45,3 +46,4 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError) 
 
 
 app.include_router(api_router)
+Instrumentator().instrument(app).expose(app)

@@ -17,3 +17,13 @@ scrape_configs:
     static_configs:
       - targets:
           - "cadvisor:8080"
+
+  - job_name: "gitlens-backend"
+    static_configs:
+      - targets:
+          - "backend:8000"
+
+  - job_name: "mongodb-exporter"
+    static_configs:
+      - targets:
+          - "mongodb-exporter:9216"
